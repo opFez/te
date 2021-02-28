@@ -8,6 +8,8 @@
   ; while
   miscmacros)
 
+(load "utility.scm")
+
 ;; Arguments
 
 (define +args+ (cdr (command-line)))
@@ -17,15 +19,16 @@
 		   (exit)))
 
 ;; should be moved
-(: read-file (string -> (list string)))
-(define (read-file f)
+(: read-file-buffer (string -> (list string)))
+(define (read-file-buffer f)
   (call-with-input-file f (lambda (port)
 							(read-lines port))))
 
 
 ;; Global file-buffer
 
-(define file-buffer (read-file (car +args+)))
+(define +max-vals+ (cons (get-max-columns) (get-max-rows)))
+(define file-buffer (read-file-buffer (car +args+)))
 (define buffer-changed? #f)
 
 
@@ -50,7 +53,7 @@
   (cons (get-x coords)
 		(safe-sub1 (get-y coords))))
 
-(define (move-down buffer coords max-vals)
+(define (move-down buffer coords +max-vals+)
   (cons (get-x coords)
 		(safe-add1 (get-y coords) (sub1 (length file-buffer)))))
 
@@ -58,10 +61,10 @@
   (cons (safe-sub1 (get-x coords))
 		(get-y coords)))
 
-(define (move-right buffer coords max-vals)
+(define (move-right buffer coords +max-vals+)
   (let ((line-length (length (string->list (list-ref buffer (get-y coords))))))
 	(if (< (get-x coords) line-length)
-		(cons (safe-add1 (get-x coords) (get-x max-vals))
+		(cons (safe-add1 (get-x coords) (get-x +max-vals+))
 			  (get-y coords))
 		(cons line-length (get-y coords)))))
 
@@ -73,52 +76,19 @@
 (define (delete-char buffer coords)
   (let ((head (take (string->list (list-ref buffer (get-y coords))) (get-x coords)))
 		(tail (drop (string->list (list-ref buffer (get-y coords))) (get-x coords))))
-	(append (take buffer (get-y coords))
-			(if (= 0 (length tail))
-				(list (list->string (reverse (cdr (reverse head)))))
-				(list (list->string (append (reverse (cdr (reverse head))) tail))))
-			(drop buffer (+ (get-y coords) 1)))))
+	(if (= 0 (length (string->list (list-ref buffer (get-y coords)))))
+		(append (take buffer (get-y coords))
+				(drop buffer (add1 (get-y coords))))
+		(append (take buffer (get-y coords))
+				(if (= 0 (length tail))
+					(list (list->string (reverse (cdr (reverse head)))))
+					(list (list->string (append (reverse (cdr (reverse head))) tail))))
+				(drop buffer (add1 (get-y coords)))))))
 
 (define (input-char buffer coords c)
   (append (take buffer (get-y coords))
 		  (list (string-insert (list-ref buffer (get-y coords)) (get-x coords) (string c)))
 		  (drop buffer (+ (get-y coords) 1))))
-
-
-;; Utility functions
-
-(define (string-insert s i t)
-  (string-replace s t i i))
-
-(: remove-trailing-newline (string -> string))
-(define (remove-trailing-newline str)
-  (list->string (reverse (cdr (reverse (string->list str))))))
-
-(: get-x ((list number number) -> number))
-(define (get-x coords)
-  (car coords))
-
-(: get-y ((list number number) -> number))
-(define (get-y coords)
-  (cdr coords))
-
-(: safe-sub1 (number -> number))
-(define (safe-sub1 n)
-  (if (= n 0)
-	  0
-	  (sub1 n)))
-
-(: safe-add1 (number number -> number))
-(define (safe-add1 n max-val)
-  (if (= n max-val)
-	  n
-	  (add1 n)))
-
-(define (get-max-x)
-  (sub1 (string->number (remove-trailing-newline (capture (tput cols))))))
-
-(define (get-max-y)
-  (sub1 (string->number (remove-trailing-newline (capture (tput lines))))))
 
 ;; Trigger this function on exiting the program
 (on-exit endwin)
@@ -131,13 +101,12 @@
   (noecho)
   (let ((should-exit #f)
 		(user-coords (cons 0 0)) ; x y
-		(last-key-escape? #f)
-		(max-vals (cons (get-max-x) (get-max-y))))
+		(last-key-escape? #f))
 	(while (not should-exit)
 	  (clear)
 	  (curs_set 0) ;; hide cursor for drawing
 	  (draw-file-buffer 0 file-buffer)
-	  (draw-empty-part (length file-buffer) (get-y max-vals))
+	  (draw-empty-part (length file-buffer) (get-y +max-vals+))
 
 	  (move (get-y user-coords) (get-x user-coords))
 	  (curs_set 1) ;; show cursor again
@@ -148,23 +117,29 @@
 		(if last-key-escape?
 			(begin
 			  (set! last-key-escape? #f)
-			  (cond ((eq? c #\j) (set! user-coords (move-left  file-buffer user-coords)))
-					((eq? c #\k) (set! user-coords (move-down  file-buffer user-coords max-vals)))
-					((eq? c #\l) (set! user-coords (move-up    file-buffer user-coords)))
-					((eq? c #\;) (set! user-coords (move-right file-buffer user-coords max-vals)))
+			  (cond ((eq? c #\j) (set! user-coords
+								   (move-left file-buffer user-coords)))
+					((eq? c #\k) (set! user-coords
+								   (move-down file-buffer user-coords +max-vals+)))
+					((eq? c #\l) (set! user-coords
+								   (move-up file-buffer user-coords)))
+					((eq? c #\;) (set! user-coords
+								   (move-right file-buffer user-coords +max-vals+)))
 					((eq? c #\q) (set! should-exit #t))
 					((eq? c #\d) (begin
-								   (set! user-coords (move-right file-buffer user-coords max-vals))
+								   (set! user-coords
+									 (move-right file-buffer user-coords +max-vals+))
 								   (set! file-buffer (delete-char file-buffer user-coords))
 								   (set! user-coords (cons (safe-sub1 (get-x user-coords))
-														   (get-y user-coords)))))))
+														   (get-y user-coords)))))
+					((eq? c #\s) (save-file))))
 			;; else if
 			(cond ((eq? c #\esc)
 				   (set! last-key-escape? #t))
 				  ;; not a shortcut, input literal character
 				  (#t (begin (set! file-buffer (input-char file-buffer user-coords c))
 							 (set! user-coords (cons (safe-add1 (get-x user-coords)
-																(get-x max-vals))
+																(get-x +max-vals+))
 													 (get-y user-coords))))))))
 	  
 
@@ -172,6 +147,6 @@
 	  ;; for compensating moving up or down outside the range of a line.
 	  (when (> (get-x user-coords)
 			   (length (string->list (list-ref file-buffer (get-y user-coords)))))
-		(set! user-coords (move-right file-buffer user-coords max-vals))))))
+		(set! user-coords (move-right file-buffer user-coords +max-vals+))))))
 
 (main)

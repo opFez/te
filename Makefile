@@ -2,7 +2,7 @@ CHICKEN = csc
 
 default: te
 
-te: main.scm
+te: main.scm utility.scm
 	$(CHICKEN) main.scm -o te
 
 .PHONY: clean
