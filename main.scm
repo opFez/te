@@ -10,14 +10,18 @@
 
 ;; Arguments
 
-;(define +args+ (cdr (command-line)))
-;(assert (not (= 0 (length +args+))))
+(define +args+ (cdr (command-line)))
+(if (= 0 (length +args+))
+	(begin (display "usage: te filename")
+		   (newline)
+		   (exit)))
 
-(define +args+ (list "test"))
-
+;; should be moved
+(: read-file (string -> (list string)))
 (define (read-file f)
   (call-with-input-file f (lambda (port)
 							(read-lines port))))
+
 
 ;; Global file-buffer
 
@@ -55,7 +59,7 @@
 		(get-y coords)))
 
 (define (move-right buffer coords max-vals)
-  (let ((line-length (length (string->list (nth (get-y coords) file-buffer)))))
+  (let ((line-length (length (string->list (list-ref buffer (get-y coords))))))
 	(if (< (get-x coords) line-length)
 		(cons (safe-add1 (get-x coords) (get-x max-vals))
 			  (get-y coords))
@@ -69,8 +73,8 @@
 
 (define (input-char buffer coords c)
   (append
-   (take buffer (- (get-y coords) 1))
-   (list (string-insert (nth (get-y coords) buffer) (get-x coords) (string c)))
+   (take buffer (get-y coords))
+   (list (string-insert (list-ref buffer (get-y coords)) (get-x coords) (string c)))
    (drop buffer (+ (get-y coords) 1))))
 
 
@@ -103,29 +107,6 @@
 	  n
 	  (add1 n)))
 
-(: nth (number (list *) -> *))
-(define (nth n l)
-  (when (or (< n 0)
-			(> n (length l)))
-	(error "Invalid index."))
-  (if (= 0 n)
-	  (car l)
-	  (nth (sub1 n) (cdr l))))
-
-;;; SRFI-1 provides these functions with take and drop
-;; (: nthcdr (number (list *) -> (list *)))
-;; (define (nthcdr n l)
-;;   (when (or (< n 0)
-;; 			(> n (length l)))
-;; 	(error "Invalid index."))
-;;   (if (= 0 n)
-;; 	  l
-;; 	  (nthcdr (sub1 n) (cdr l))))
-
-;; (: take (number (list *) -> (list *)))
-;; (define (take n l)
-;;   (reverse (nthcdr (- (length l) n) (reverse l))))
-
 (define (get-max-x)
   (sub1 (string->number (remove-trailing-newline (capture (tput cols))))))
 
@@ -133,7 +114,7 @@
   (sub1 (string->number (remove-trailing-newline (capture (tput lines))))))
 
 ;; Trigger this function on exiting the program
-;; (on-exit endwin)
+(on-exit endwin)
 
 ;; Entry point (main)
 
@@ -142,8 +123,8 @@
   (cbreak)
   (noecho)
   (let ((should-exit #f)
-		(c #\a)
 		(user-coords (cons 0 0)) ; x y
+		(last-key-escape? #f)
 		(max-vals (cons (get-max-x) (get-max-y))))
 	(while (not should-exit)
 	  (clear)
@@ -154,19 +135,28 @@
 
 	  (refresh)
 
-	  (set! c (getch))
-	  (cond ((eq? c #\j) (set! user-coords (move-left  file-buffer user-coords)))
-			((eq? c #\k) (set! user-coords (move-down  file-buffer user-coords max-vals)))
-			((eq? c #\l) (set! user-coords (move-up    file-buffer user-coords)))
-			((eq? c #\;) (set! user-coords (move-right file-buffer user-coords max-vals)))
-			((eq? c #\q) (set! should-exit #t))
-			(#t (set! file-buffer (input-char file-buffer user-coords c))))
+	  (let ((c (getch)))
+		(if last-key-escape?
+			(begin
+			  (set! last-key-escape? #f)
+			  (cond ((eq? c #\j) (set! user-coords (move-left  file-buffer user-coords)))
+					((eq? c #\k) (set! user-coords (move-down  file-buffer user-coords max-vals)))
+					((eq? c #\l) (set! user-coords (move-up    file-buffer user-coords)))
+					((eq? c #\;) (set! user-coords (move-right file-buffer user-coords max-vals)))
+					((eq? c #\q) (set! should-exit #t))))
+			(if (eq? c #\esc) ;; else if
+				(set! last-key-escape? #t)
+				;; not a shortcut, input literal character
+				(begin (set! file-buffer (input-char file-buffer user-coords c))
+					   (set! user-coords (cons (safe-add1 (get-x user-coords)
+														  (get-x max-vals))
+											   (get-y user-coords)))))))
 	  
 
 	  ;; Exploit the fact that moving right correctly places you on the end of the line
 	  ;; for compensating moving up or down outside the range of a line.
 	  (when (> (get-x user-coords)
-			   (length (string->list (nth (get-y user-coords) file-buffer))))
+			   (length (string->list (list-ref file-buffer (get-y user-coords)))))
 		(set! user-coords (move-right file-buffer user-coords max-vals))))))
 
-;; (main)
+(main)
