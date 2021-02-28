@@ -4,11 +4,11 @@ Feature check list:
  [x] Basic movement
  [x] Inserting text
  [x] Basic deletion of text
- [ ] Saving files
+ [/] Saving files (missing "save as"-feature)
  [ ] Handle files larger than the terminal size
  [ ] Prompt for exit if file has been edited
  [ ] More advanced movement (jump by word, paragraphs)
- [ ] Marking text
+ [ ] Marking text (persistent marking)
  [ ]  - Multiple cursors and markers
  [ ] Clipboard
  [ ] Undo history

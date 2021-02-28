@@ -5,6 +5,7 @@
 		(ncurses)
 		(shell)
 		(chicken io)
+		(chicken file posix)
 		;; while, should switch to simple let loop
 		miscmacros)
 
@@ -85,6 +86,17 @@
 		  (list (string-insert (list-ref buffer (get-y coords)) (get-x coords) (string c)))
 		  (drop buffer (+ (get-y coords) 1))))
 
+
+;; I/O
+(define (save-file buffer filename)
+  (let ((outf (file-open filename (+ open/write open/wronly))))
+	(let loop ((lines-to-write buffer))
+	  (if (= 0 (length lines-to-write))
+		  (file-close outf)
+		  (begin (file-write outf (car lines-to-write))
+				 (file-write outf "\n")
+				 (loop (cdr lines-to-write)))))))
+
 ;; Trigger this function on exiting the program
 (on-exit endwin)
 
@@ -127,7 +139,7 @@
 								   (set! file-buffer (delete-char file-buffer user-coords))
 								   (set! user-coords (cons (safe-sub1 (get-x user-coords))
 														   (get-y user-coords)))))
-					((eq? c #\s) (save-file))))
+					((eq? c #\s) (save-file file-buffer (car +args+)))))
 			;; else if
 			(cond ((eq? c #\esc)
 				   (set! last-key-escape? #t))
