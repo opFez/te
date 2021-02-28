@@ -23,7 +23,7 @@
 
 (define +max-vals+ (cons (get-max-columns) (get-max-rows)))
 (define file-buffer (read-n-lines (car +args+) (get-y +max-vals+)))
-(define buffer-changed? #f)
+(define *buffer-changed* #f)
 
 
 ;; Drawing functions
@@ -132,6 +132,10 @@
 								   (move-up file-buffer user-coords)))
 					((eq? c #\;) (set! user-coords
 								   (move-right file-buffer user-coords +max-vals+)))
+					((eq? c #\a) (set! user-coords
+								   (cons 0 (get-y user-coords))))
+					((eq? c #\f) (set! user-coords
+								   (cons (length (string->list (list-ref file-buffer (get-y user-coords)))) (get-y user-coords))))
 					((eq? c #\q) (set! should-exit #t))
 					((eq? c #\d) (begin
 								   (set! user-coords
@@ -139,12 +143,14 @@
 								   (set! file-buffer (delete-char file-buffer user-coords))
 								   (set! user-coords (cons (safe-sub1 (get-x user-coords))
 														   (get-y user-coords)))))
-					((eq? c #\s) (save-file file-buffer (car +args+)))))
+					((eq? c #\s) (begin (set! *buffer-changed* #f)
+										(save-file file-buffer (car +args+))))))
 			;; else if
 			(cond ((eq? c #\esc)
 				   (set! last-key-escape? #t))
 				  ;; not a shortcut, input literal character
-				  (#t (begin (set! file-buffer (input-char file-buffer user-coords c))
+				  (#t (begin (set! *buffer-changed* #t)
+							 (set! file-buffer (input-char file-buffer user-coords c))
 							 (set! user-coords (cons (safe-add1 (get-x user-coords)
 																(get-x +max-vals+))
 													 (get-y user-coords))))))))

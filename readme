@@ -32,6 +32,8 @@ To move
  - down:  A-k
  - up:    A-l
  - right: A-;
+ - to the beginning of line: A-a
+ - to the end of a line: A-f
 This is superior to vi's movement keys because it keeps the right hand in the
 standard touch-typing position, as opposed to one key too far to the left.
 
