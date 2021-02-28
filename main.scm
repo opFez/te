@@ -18,16 +18,10 @@
 		   (newline)
 		   (exit)))
 
-;; should be moved
-(: read-file-buffer (string -> (list string)))
-(define (read-file-buffer f)
-  (read-n-lines f (get-y +max-vals+)))
-
-
 ;; Global file-buffer
 
 (define +max-vals+ (cons (get-max-columns) (get-max-rows)))
-(define file-buffer (read-file-buffer (car +args+)))
+(define file-buffer (read-n-lines (car +args+) (get-y +max-vals+)))
 (define buffer-changed? #f)
 
 
