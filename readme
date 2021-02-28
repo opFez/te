@@ -6,6 +6,7 @@ Feature check list:
  [x] Basic deletion of text
  [ ] Saving files
  [ ] Handle files larger than the terminal size
+ [ ] Prompt for exit if file has been edited
  [ ] More advanced movement (jump by word, paragraphs)
  [ ] Marking text
  [ ]  - Multiple cursors and markers
@@ -33,8 +34,9 @@ To move
  - right: A-;
 This is superior to vi's movement keys because it keeps the right hand in the
 standard touch-typing position, as opposed to one key too far to the left.
+
 To delete
- - character in front: A-d
+ - character in front of cursor: A-d
 
 To exit: A-q (subject to change)
 

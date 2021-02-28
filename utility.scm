@@ -1,7 +1,8 @@
 ;; utility.scm
 ;; Utility functons used by other functions.
 
-(import (shell)
+(import (r7rs)
+		(shell)
 		(srfi-13))
 
 (define (string-insert s i t)
@@ -36,3 +37,17 @@
 
 (define (get-max-rows)
   (sub1 (string->number (remove-trailing-newline (capture (tput lines))))))
+
+;; modified https://stackoverflow.com/a/63548144
+(define (read-n-lines file n)
+  (let ((infile (open-input-file file)))
+	(let loop ((lines '())
+			   (next-line (read-line infile))
+			   (lines-read 0))
+	  (if (or (eof-object? next-line)
+			  (= lines-read n))
+		  (begin (close-input-port infile)
+				 (reverse lines))
+		  (loop (cons next-line lines)
+				(read-line infile)
+				(add1 lines-read))))))

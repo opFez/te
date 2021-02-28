@@ -1,12 +1,12 @@
-(import
-  (srfi-1)
-  (srfi-13)
-  (srfi-193)
-  (ncurses)
-  (shell)
-  (chicken io)
-  ; while
-  miscmacros)
+(import (r7rs)
+		(srfi-1)
+		(srfi-13)
+		(srfi-193)
+		(ncurses)
+		(shell)
+		(chicken io)
+		;; while, should switch to simple let loop
+		miscmacros)
 
 (load "utility.scm")
 
@@ -21,8 +21,7 @@
 ;; should be moved
 (: read-file-buffer (string -> (list string)))
 (define (read-file-buffer f)
-  (call-with-input-file f (lambda (port)
-							(read-lines port))))
+  (read-n-lines f (get-y +max-vals+)))
 
 
 ;; Global file-buffer
@@ -33,6 +32,8 @@
 
 
 ;; Drawing functions
+;; TODO: switch so that the internal buffer is a list, and the draw functions
+;; convert those lists to strings before printing.
 
 (define (draw-empty-part line-number max-rows)
   (mvprintw line-number 0 "~")
