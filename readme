@@ -1,1 +1,33 @@
 te is a text editor written in Chicken Scheme.
+
+Feature check list:
+ [x] Basic movement
+ [x] Inserting text
+ [ ] Basic deletion of text
+ [ ] Saving files
+ [ ] More advanced movement (jump by word, paragraphs)
+ [ ] Marking text
+ [ ]  - Multiple cursors and markers
+ [ ] Clipboard
+
+Controls:
+te is a modeless editor which utilizes modifier keys to perform actions.
+Unlike Emacs, however, the main modifier key is the alt-key. This makes most
+actions far more ergonomic compared to Emacs.
+The movement keys are inspired by vi, but with a couple tweaks.
+
+In the following key descriptions, prefixing a key with 'A-' means holding the
+alt key while pressing the subsequent key. As an example, A-j refers to holding
+alt and pressing the letter 'j'.
+Prefixing a key with 'C-' refers to holding the control key, and 'S-' refers to
+the shift key.
+
+To move
+ - left:  A-j
+ - down:  A-k
+ - up:    A-l
+ - right: A-;
+This is superior to vi's movement keys because it keeps the right hand in the
+standard touch-typing position, as opposed to one key too far to the left.
+
+More description of controls will be added here as they are added.

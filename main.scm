@@ -71,6 +71,8 @@
 (define (delete-char! buffer coords)
   #t)
 
+;; seems way too complicated
+;; may be fixed by making the buffer a vector?
 (define (input-char buffer coords c)
   (append
    (take buffer (get-y coords))
