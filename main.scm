@@ -67,17 +67,22 @@
 
 
 ;; Editing
-
-(define (delete-char! buffer coords)
-  #t)
-
 ;; seems way too complicated
 ;; may be fixed by making the buffer a vector?
+
+(define (delete-char buffer coords)
+  (let ((head (take (string->list (list-ref buffer (get-y coords))) (get-x coords)))
+		(tail (drop (string->list (list-ref buffer (get-y coords))) (get-x coords))))
+	(append (take buffer (get-y coords))
+			(if (= 0 (length tail))
+				(list (list->string (reverse (cdr (reverse head)))))
+				(list (list->string (append (reverse (cdr (reverse head))) tail))))
+			(drop buffer (+ (get-y coords) 1)))))
+
 (define (input-char buffer coords c)
-  (append
-   (take buffer (get-y coords))
-   (list (string-insert (list-ref buffer (get-y coords)) (get-x coords) (string c)))
-   (drop buffer (+ (get-y coords) 1))))
+  (append (take buffer (get-y coords))
+		  (list (string-insert (list-ref buffer (get-y coords)) (get-x coords) (string c)))
+		  (drop buffer (+ (get-y coords) 1))))
 
 
 ;; Utility functions
@@ -130,10 +135,12 @@
 		(max-vals (cons (get-max-x) (get-max-y))))
 	(while (not should-exit)
 	  (clear)
+	  (curs_set 0) ;; hide cursor for drawing
 	  (draw-file-buffer 0 file-buffer)
 	  (draw-empty-part (length file-buffer) (get-y max-vals))
 
 	  (move (get-y user-coords) (get-x user-coords))
+	  (curs_set 1) ;; show cursor again
 
 	  (refresh)
 
@@ -145,14 +152,20 @@
 					((eq? c #\k) (set! user-coords (move-down  file-buffer user-coords max-vals)))
 					((eq? c #\l) (set! user-coords (move-up    file-buffer user-coords)))
 					((eq? c #\;) (set! user-coords (move-right file-buffer user-coords max-vals)))
-					((eq? c #\q) (set! should-exit #t))))
-			(if (eq? c #\esc) ;; else if
-				(set! last-key-escape? #t)
-				;; not a shortcut, input literal character
-				(begin (set! file-buffer (input-char file-buffer user-coords c))
-					   (set! user-coords (cons (safe-add1 (get-x user-coords)
-														  (get-x max-vals))
-											   (get-y user-coords)))))))
+					((eq? c #\q) (set! should-exit #t))
+					((eq? c #\d) (begin
+								   (set! user-coords (move-right file-buffer user-coords max-vals))
+								   (set! file-buffer (delete-char file-buffer user-coords))
+								   (set! user-coords (cons (safe-sub1 (get-x user-coords))
+														   (get-y user-coords)))))))
+			;; else if
+			(cond ((eq? c #\esc)
+				   (set! last-key-escape? #t))
+				  ;; not a shortcut, input literal character
+				  (#t (begin (set! file-buffer (input-char file-buffer user-coords c))
+							 (set! user-coords (cons (safe-add1 (get-x user-coords)
+																(get-x max-vals))
+													 (get-y user-coords))))))))
 	  
 
 	  ;; Exploit the fact that moving right correctly places you on the end of the line

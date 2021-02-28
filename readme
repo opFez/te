@@ -3,12 +3,13 @@ te is a text editor written in Chicken Scheme.
 Feature check list:
  [x] Basic movement
  [x] Inserting text
- [ ] Basic deletion of text
+ [x] Basic deletion of text
  [ ] Saving files
  [ ] More advanced movement (jump by word, paragraphs)
  [ ] Marking text
  [ ]  - Multiple cursors and markers
  [ ] Clipboard
+ [ ] Mouse movement
 
 Controls:
 te is a modeless editor which utilizes modifier keys to perform actions.
