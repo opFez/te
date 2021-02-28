@@ -30,5 +30,9 @@ To move
  - right: A-;
 This is superior to vi's movement keys because it keeps the right hand in the
 standard touch-typing position, as opposed to one key too far to the left.
+To delete
+ - character in front: A-d
+
+To exit: A-q (subject to change)
 
 More description of controls will be added here as they are added.
