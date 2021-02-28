@@ -64,6 +64,13 @@
 			  (get-y coords))
 		(cons line-length (get-y coords)))))
 
+(define (move-bol coords)
+  (cons 0 (get-y coords)))
+
+(define (move-eol buffer coords)
+  (cons (length (string->list (list-ref buffer (get-y coords))))
+		(get-y coords)))
+
 
 ;; Editing
 ;; seems way too complicated
@@ -133,9 +140,9 @@
 					((eq? c #\;) (set! user-coords
 								   (move-right file-buffer user-coords +max-vals+)))
 					((eq? c #\a) (set! user-coords
-								   (cons 0 (get-y user-coords))))
+								   (move-bol user-coords)))
 					((eq? c #\f) (set! user-coords
-								   (cons (length (string->list (list-ref file-buffer (get-y user-coords)))) (get-y user-coords))))
+								   (move-eol file-buffer user-coords)))
 					((eq? c #\q) (set! should-exit #t))
 					((eq? c #\d) (begin
 								   (set! user-coords
