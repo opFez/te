@@ -1,3 +1,7 @@
+*** NOT UPDATED ***
+ncurses turned out to be the wrong tool for the job.
+*** OLD README FOLLOWS ***
+
 te is a text editor written in Chicken Scheme.
 
 Feature check list:
@@ -15,7 +19,6 @@ Feature check list:
  [ ] Mouse movement
  [ ] Plugin system (should be easy, just include Scheme source files)
 
-Controls:
 te is a modeless editor which utilizes modifier keys to perform actions.
 Unlike Emacs, however, the main modifier key is the alt-key. This makes most
 actions far more ergonomic compared to Emacs.
