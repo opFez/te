@@ -101,7 +101,8 @@
       (if (= 0 (length lines-to-write))
           (file-close outf)
           (begin (file-write outf (car lines-to-write))
-                 (file-write outf "\n")
+                 (if (not (= 1 (length lines-to-write)))
+                     (file-write outf "\n"))
                  (loop (cdr lines-to-write)))))))
 
 ;; Trigger this function on exiting the program
@@ -153,7 +154,10 @@
                                      (move-right file-buffer user-coords +max-vals+))
                                    (set! file-buffer (delete-char file-buffer user-coords))
                                    (set! user-coords (cons (safe-sub1 (get-x user-coords))
-                                                           (get-y user-coords)))))
+                                                           (get-y user-coords)))
+                                   (when (= (get-y user-coords) (length file-buffer))
+                                     (set! user-coords (cons (get-x user-coords)
+                                                             (safe-sub1 (get-y user-coords)))))))
                     ((eq? c #\s) (begin (set! just-saved #t)
 										(set! *buffer-changed* #f)
                                         (save-file file-buffer (car +args+))))))
