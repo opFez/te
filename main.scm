@@ -32,7 +32,7 @@
 
 (define (draw-empty-part line-number max-rows)
   (mvprintw line-number 0 "~")
-  (if (= line-number max-rows)
+  (if (= (add1 line-number) max-rows)
       #f
       (draw-empty-part (add1 line-number) max-rows)))
 
@@ -115,12 +115,16 @@
   (noecho)
   (let ((should-exit #f)
         (user-coords (cons 0 0)) ; x y
-        (last-key-escape? #f))
+        (last-key-escape? #f)
+		(just-saved #f))
     (while (not should-exit)
       (clear)
       (curs_set 0) ;; hide cursor for drawing
       (draw-file-buffer 0 file-buffer)
       (draw-empty-part (length file-buffer) (get-y +max-vals+))
+	  (when just-saved
+		(mvprintw (get-y +max-vals+) 0 "Saved!")
+		(set! just-saved #f))
 
       (move (get-y user-coords) (get-x user-coords))
       (curs_set 1) ;; show cursor again
@@ -150,7 +154,8 @@
                                    (set! file-buffer (delete-char file-buffer user-coords))
                                    (set! user-coords (cons (safe-sub1 (get-x user-coords))
                                                            (get-y user-coords)))))
-                    ((eq? c #\s) (begin (set! *buffer-changed* #f)
+                    ((eq? c #\s) (begin (set! just-saved #t)
+										(set! *buffer-changed* #f)
                                         (save-file file-buffer (car +args+))))))
             ;; else if
             (cond ((eq? c #\esc)
